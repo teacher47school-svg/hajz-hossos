@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>جدول حجز الحصص</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+:root{
+  --blue:#3b5bdb;
+  --blue2:#4c6ef5;
+  --blueli:#eef2ff;
+  --green:#2f9e44;
+  --greenli:#ebfbee;
+  --red:#e03131;
+  --redli:#fff5f5;
+  --bg:#f0f2f9;
+  --txt:#1a1a2e;
+  --grey:#6c757d;
+  --brd:#dee2f0;
+  --wh:#fff;
+  --sh:0 2px 16px rgba(59,91,219,.10);
+  --shb:0 4px 30px rgba(59,91,219,.16);
+}
+
+html,body{
+  font-family:'Tajawal',Arial,sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  color:var(--txt);
+  font-size:16px;
+}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--blue);}
+.tab{
+  flex:1;padding:15px 10px;
+  font-family:inherit;font-size:1em;font-weight:700;
+  border:none;background:transparent;
+  color:rgba(255,255,255,.65);cursor:pointer;
+  border-bottom:3px solid transparent;
+  transition:all .25s;
+}
+.tab.on{color:#fff;border-bottom-color:#a5b4fc;background:rgba(255,255,255,.09);}
+
+/* ── PAGES ── */
+.pg{display:none;}
+.pg.on{display:block;}
+
+/* ── HEADER ── */
+.hdr{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:#fff;text-align:center;
+  padding:24px 16px 20px;
+  border-radius:0 0 20px 20px;
+  box-shadow:var(--shb);
+  margin-bottom:20px;
+}
+.hdr h1{font-size:clamp(1em,4vw,1.7em);font-weight:800;line-height:1.3;margin-bottom:8px;}
+.hdr-row2{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:.9em;opacity:.88;}
+.badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:3px 12px;font-weight:600;white-space:nowrap;}
+
+/* sync badge */
+.sync-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+  border-radius:16px;padding:3px 12px;font-size:.82em;font-weight:600;
+}
+.dot{width:8px;height:8px;border-radius:50%;background:#69db7c;display:inline-block;animation:pulse 2s infinite;}
+.dot.off{background:#ff6b6b;animation:none;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── WRAP ── */
+.wrap{max-width:1100px;margin:0 auto;padding:0 12px 30px;}
+
+/* ── CARD ── */
+.card{background:var(--wh);border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:var(--sh);}
+.card-title{font-size:1.05em;font-weight:700;color:var(--blue);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--blueli);}
+
+/* ── FORM ── */
+.fgrp{margin-bottom:14px;}
+.fgrp label{display:block;font-weight:600;font-size:.93em;margin-bottom:5px;}
+.fgrp input,.fgrp select{
+  width:100%;padding:12px 14px;
+  border:2px solid var(--brd);border-radius:8px;
+  font-size:1em;font-family:inherit;
+  background:#fafbff;color:var(--txt);
+  -webkit-appearance:none;appearance:none;
+  transition:border .2s;
+}
+.fgrp input:focus,.fgrp select:focus{outline:none;border-color:var(--blue);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:500px){.frow{grid-template-columns:1fr;}}
+
+.btn-blue{
+  display:block;width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:#fff;border:none;border-radius:9px;
+  font-family:inherit;font-size:1.05em;font-weight:700;
+  cursor:pointer;transition:opacity .2s;
+  -webkit-appearance:none;
+}
+.btn-blue:active{opacity:.85;}
+.btn-blue:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── ALERTS ── */
+.alerts{margin-bottom:4px;}
+.alert{padding:12px 16px;border-radius:8px;margin-bottom:10px;font-weight:600;font-size:.95em;}
+.a-ok {background:var(--greenli);color:#155724;border-right:4px solid var(--green);}
+.a-err{background:var(--redli);  color:#7b1b1b;border-right:4px solid var(--red);}
+.a-inf{background:var(--blueli); color:#1e3a8a;border-right:4px solid var(--blue);}
+
+/* ── WEEK BAR ── */
+.wbar{display:flex;gap:20px;flex-wrap:wrap;padding:12px 16px;background:var(--wh);border-radius:10px;box-shadow:var(--sh);margin-bottom:12px;}
+.wi{display:flex;gap:6px;align-items:center;font-size:.93em;}
+.wi b{color:var(--blue);}
+
+/* ── TABLE SCROLL WRAPPER ── */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px;box-shadow:var(--sh);}
+.shint{font-size:.8em;color:var(--grey);text-align:center;padding:4px 0 8px;display:none;}
+@media(max-width:760px){.shint{display:block;}}
+
+/* ── TABLE ── */
+table{border-collapse:collapse;background:var(--wh);min-width:680px;width:100%;}
+thead tr{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;}
+th{padding:14px 10px;text-align:center;font-size:.9em;font-weight:700;white-space:nowrap;}
+td{padding:0;border-bottom:1px solid var(--brd);border-left:1px solid var(--brd);text-align:center;vertical-align:middle;}
+td.day-cell{
+  font-weight:700;background:var(--blueli);color:var(--blue);
+  padding:10px 12px;white-space:nowrap;font-size:.93em;
+  border-left:2px solid #748ffc;position:sticky;right:0;z-index:1;
+}
+
+.cell{min-height:52px;min-width:90px;display:flex;align-items:center;justify-content:center;padding:6px;}
+.empty{color:#c4cad8;font-size:.83em;}
+.booked{
+  background:var(--greenli);border:1.5px solid #b2f2bb;border-radius:7px;
+  padding:6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;
+}
+.tname{font-weight:700;color:var(--green);font-size:.88em;word-break:break-word;text-align:center;}
+.del-btn{
+  padding:3px 8px;font-size:.72em;font-family:inherit;
+  background:var(--red);color:#fff;border:none;border-radius:4px;
+  cursor:pointer;font-weight:700;margin-top:2px;
+  -webkit-appearance:none;
+}
+.del-btn:active{opacity:.75;}
+
+/* ── LOGIN ── */
+.login-wrap{max-width:380px;margin:50px auto;padding:0 16px;}
+.login-box{background:var(--wh);border-radius:18px;padding:36px 28px;box-shadow:var(--shb);text-align:center;}
+.lock{font-size:2.8em;margin-bottom:10px;}
+.login-box h2{font-size:1.25em;font-weight:800;color:var(--blue);margin-bottom:4px;}
+.login-box p.sub{color:var(--grey);font-size:.92em;margin-bottom:22px;}
+.login-box input{
+  width:100%;padding:13px;border:2px solid var(--brd);border-radius:9px;
+  font-size:1.1em;font-family:inherit;text-align:center;letter-spacing:4px;
+  margin-bottom:12px;-webkit-appearance:none;background:#fff;
+}
+.login-box input:focus{outline:none;border-color:var(--blue);}
+.login-box .btn-blue{margin-top:4px;}
+.err-msg{color:var(--red);font-size:.88em;margin-bottom:10px;display:none;}
+
+/* ── ADMIN CONTENT ── */
+.hidden{display:none;}
+
+.adm-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;}
+@media(max-width:500px){.adm-fields{grid-template-columns:1fr;}}
+.btn-save{
+  padding:12px 20px;background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:#fff;border:none;border-radius:8px;
+  font-family:inherit;font-size:.95em;font-weight:700;cursor:pointer;
+  margin-top:12px;-webkit-appearance:none;
+}
+.btn-save:active{opacity:.82;}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.topbar-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-out{
+  padding:9px 16px;background:var(--redli);color:var(--red);
+  border:1.5px solid #ffc9c9;border-radius:7px;
+  font-family:inherit;font-size:.88em;font-weight:700;cursor:pointer;
+  -webkit-appearance:none;
+}
+.btn-out:active{background:var(--red);color:#fff;}
+.btn-clr{
+  padding:9px 16px;background:#fff3bf;color:#7b5800;
+  border:1.5px solid #ffe066;border-radius:7px;
+  font-family:inherit;font-size:.88em;font-weight:700;cursor:pointer;
+  -webkit-appearance:none;
+}
+.btn-clr:active{background:#ffe066;}
+
+.sec-title{font-size:1.2em;font-weight:800;color:var(--blue);margin-bottom:10px;}
+
+/* loading overlay */
+.loading{
+  position:fixed;inset:0;background:rgba(255,255,255,.85);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:999;gap:14px;
+}
+.spinner{
+  width:44px;height:44px;border:4px solid var(--blueli);
+  border-top-color:var(--blue);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:var(--blue);font-weight:700;font-size:1.05em;}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading" id="loading-overlay">
+  <div class="spinner"></div>
+  <p>جاري الاتصال بالخادم…</p>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" id="tab-t">👩‍🏫 نسخة المعلمات</button>
+  <button class="tab"    id="tab-a">🔐 نسخة المديرة</button>
+</div>
+
+<!-- ══════════ TEACHERS PAGE ══════════ -->
+<div class="pg on" id="pg-t">
+  <div class="hdr">
+    <h1>📚 الطفولة المبكرة بابتدائية السابعة والأربعون</h1>
+    <div class="hdr-row2">
+      <span>جدول حجز الحصص الأسبوعي</span>
+      <span class="badge" id="hd-week-t">الأسبوع: —</span>
+      <span class="badge" id="hd-date-t">📅 —</span>
+      <span class="sync-badge"><span class="dot" id="sync-dot-t"></span><span id="sync-txt-t">جاري الاتصال</span></span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="alerts" id="al-t"></div>
+
+    <!-- booking form -->
+    <div class="card">
+      <div class="card-title">إضافة حجز جديد</div>
+      <div class="fgrp">
+        <label for="t-name">اسم المعلمة</label>
+        <input type="text" id="t-name" placeholder="أدخلي اسمك">
+      </div>
+      <div class="frow">
+        <div class="fgrp">
+          <label for="t-day">اليوم</label>
+          <select id="t-day">
+            <option value="">-- اختاري --</option>
+            <option value="0">الأحد</option>
+            <option value="1">الاثنين</option>
+            <option value="2">الثلاثاء</option>
+            <option value="3">الأربعاء</option>
+            <option value="4">الخميس</option>
+          </select>
+        </div>
+        <div class="fgrp">
+          <label for="t-les">الحصة</label>
+          <select id="t-les">
+            <option value="">-- اختاري --</option>
+            <option value="1">الحصة الأولى</option>
+            <option value="2">الحصة الثانية</option>
+            <option value="3">الحصة الثالثة</option>
+            <option value="4">الحصة الرابعة</option>
+            <option value="5">الحصة الخامسة</option>
+            <option value="6">الحصة السادسة</option>
+            <option value="7">الحصة السابعة</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-blue" id="btn-book">📌 حجز الحصة</button>
+    </div>
+
+    <!-- schedule -->
+    <div class="sec-title">جدول حصص الأسبوع</div>
+    <div class="wbar">
+      <div class="wi"><b>رقم الأسبوع:</b> <span id="wb-week-t">—</span></div>
+      <div class="wi"><b>التاريخ:</b> <span id="wb-date-t">—</span></div>
+    </div>
+    <p class="shint">👈 اسحبي يساراً لرؤية باقي الجدول</p>
+    <div class="tscroll">
+      <table id="tbl-t">
+        <thead><tr>
+          <th>اليوم</th>
+          <th>الأولى</th><th>الثانية</th><th>الثالثة</th><th>الرابعة</th>
+          <th>الخامسة</th><th>السادسة</th><th>السابعة</th>
+        </tr></thead>
+        <tbody id="tbody-t"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ ADMIN PAGE ══════════ -->
+<div class="pg" id="pg-a">
+
+  <!-- login -->
+  <div id="a-login" class="login-wrap">
+    <div class="login-box">
+      <div class="lock">🔐</div>
+      <h2>صفحة المديرة</h2>
+      <p class="sub">أدخلي كلمة المرور للدخول</p>
+      <input type="password" id="a-pass" placeholder="••••••">
+      <p class="err-msg" id="a-err">كلمة المرور غير صحيحة ❌</p>
+      <button class="btn-blue" id="btn-login">دخول</button>
+    </div>
+  </div>
+
+  <!-- admin content -->
+  <div id="a-content" class="hidden">
+    <div class="hdr">
+      <h1>📚 الطفولة المبكرة بابتدائية السابعة والأربعون</h1>
+      <div class="hdr-row2">
+        <span>لوحة تحكم المديرة</span>
+        <span class="badge" id="hd-week-a">الأسبوع: —</span>
+        <span class="badge" id="hd-date-a">📅 —</span>
+        <span class="sync-badge"><span class="dot" id="sync-dot-a"></span><span id="sync-txt-a">جاري الاتصال</span></span>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="alerts" id="al-a"></div>
+
+      <!-- week info controls -->
+      <div class="card">
+        <div class="card-title">⚙️ تعديل معلومات الأسبوع</div>
+        <div class="adm-fields">
+          <div class="fgrp" style="margin:0">
+            <label for="a-wnum">رقم الأسبوع</label>
+            <input type="text" id="a-wnum" placeholder="مثال: الأسبوع الثالث">
+          </div>
+          <div class="fgrp" style="margin:0">
+            <label for="a-wdate">التاريخ / الفترة</label>
+            <input type="text" id="a-wdate" placeholder="مثال: 1/4 – 5/4/2025">
+          </div>
+        </div>
+        <button class="btn-save" id="btn-save-week">💾 حفظ معلومات الأسبوع</button>
+      </div>
+
+      <!-- table -->
+      <div class="topbar">
+        <div class="sec-title" style="margin:0">جدول حصص الأسبوع</div>
+        <div class="topbar-btns">
+          <button class="btn-clr" id="btn-clear">🗑️ حذف جميع الحجوزات</button>
+          <button class="btn-out" id="btn-logout">تسجيل خروج</button>
+        </div>
+      </div>
+      <div class="wbar">
+        <div class="wi"><b>رقم الأسبوع:</b> <span id="wb-week-a">—</span></div>
+        <div class="wi"><b>التاريخ:</b> <span id="wb-date-a">—</span></div>
+      </div>
+      <p class="shint">👈 اسحبي يساراً لرؤية باقي الجدول</p>
+      <div class="tscroll">
+        <table id="tbl-a">
+          <thead><tr>
+            <th>اليوم</th>
+            <th>الأولى</th><th>الثانية</th><th>الثالثة</th><th>الرابعة</th>
+            <th>الخامسة</th><th>السادسة</th><th>السابعة</th>
+          </tr></thead>
+          <tbody id="tbody-a"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, set, remove, onValue, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+/* ══════════════════════════════════════════════
+   🔧 إعدادات Firebase
+   ══════════════════════════════════════════════
+   خطوات الإعداد (مرة واحدة فقط):
+   1. افتحي: https://console.firebase.google.com
+   2. أنشئي مشروعاً جديداً
+   3. اختاري "Realtime Database" وأنشئيه بوضع "Test mode"
+   4. انسخي إعدادات مشروعك وضعيها هنا
+   ══════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCIxtoeogbDeOIO-6dsDQQDqhTdW2k2i1o",
+  authDomain: "class-48062.firebaseapp.com",
+  databaseURL: "https://class-48062-default-rtdb.firebaseio.com",
+  projectId: "class-48062",
+  storageBucket: "class-48062.firebasestorage.app",
+  messagingSenderId: "710717199621",
+  appId: "1:710717199621:web:2d5c5b1c8036349ba5136c"
+};
+
+const PASS = '123456';
+const DAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+
+let data  = {};
+let winfo = {w:'', d:''};
+let connected = false;
+
+/* ── Init Firebase ── */
+let app, db, bookingsRef, winfoRef;
+try {
+  app = initializeApp(firebaseConfig);
+  db  = getDatabase(app);
+  bookingsRef = ref(db, 'bookings');
+  winfoRef    = ref(db, 'weekinfo');
+} catch(e) {
+  showError('تعذّر الاتصال بـ Firebase. تأكدي من إعدادات المشروع.');
+}
+
+/* ── Hide loading after 5s max ── */
+setTimeout(() => {
+  document.getElementById('loading-overlay').style.display = 'none';
+}, 5000);
+
+/* ── Listen for bookings (real-time) ── */
+onValue(bookingsRef, (snapshot) => {
+  data = snapshot.val() || {};
+  renderAll();
+  setConnected(true);
+  document.getElementById('loading-overlay').style.display = 'none';
+}, (err) => {
+  setConnected(false);
+  document.getElementById('loading-overlay').style.display = 'none';
+});
+
+/* ── Listen for week info (real-time) ── */
+onValue(winfoRef, (snapshot) => {
+  winfo = snapshot.val() || {w:'', d:''};
+  refreshWeek();
+});
+
+/* ── Connection state ── */
+function setConnected(state) {
+  connected = state;
+  const dots = ['sync-dot-t','sync-dot-a'];
+  const txts = ['sync-txt-t','sync-txt-a'];
+  dots.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.className = 'dot' + (state ? '' : ' off');
+  });
+  txts.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = state ? 'متصل ومزامن' : 'غير متصل';
+  });
+}
+
+/* ── Tabs ── */
+document.getElementById('tab-t').addEventListener('click', () => showTab('t'));
+document.getElementById('tab-a').addEventListener('click', () => showTab('a'));
+
+function showTab(t){
+  document.getElementById('pg-t').className  = 'pg' + (t==='t'?' on':'');
+  document.getElementById('pg-a').className  = 'pg' + (t==='a'?' on':'');
+  document.getElementById('tab-t').className = 'tab' + (t==='t'?' on':'');
+  document.getElementById('tab-a').className = 'tab' + (t==='a'?' on':'');
+}
+
+/* ── Alert ── */
+function alert2(id, msg, type){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const d  = document.createElement('div');
+  d.className   = 'alert a-'+(type||'ok');
+  d.textContent = msg;
+  el.appendChild(d);
+  setTimeout(() => { if(d.parentNode) d.parentNode.removeChild(d); }, 4000);
+}
+
+function showError(msg){
+  alert2('al-t', msg, 'err');
+  alert2('al-a', msg, 'err');
+}
+
+/* ── Week displays ── */
+function refreshWeek(){
+  const w = winfo.w || '—';
+  const d = winfo.d || '—';
+  setText('hd-week-t','الأسبوع: '+w);
+  setText('hd-week-a','الأسبوع: '+w);
+  setText('hd-date-t','📅 '+d);
+  setText('hd-date-a','📅 '+d);
+  setText('wb-week-t', w);
+  setText('wb-week-a', w);
+  setText('wb-date-t', d);
+  setText('wb-date-a', d);
+  setVal('a-wnum',  winfo.w||'');
+  setVal('a-wdate', winfo.d||'');
+}
+
+function setText(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
+function setVal(id,v){  const e=document.getElementById(id); if(e) e.value=v; }
+
+/* ── Render table ── */
+function renderTable(tbodyId, canDel){
+  const tb = document.getElementById(tbodyId);
+  if(!tb) return;
+  tb.innerHTML = '';
+  for(let di=0; di<DAYS.length; di++){
+    const tr  = document.createElement('tr');
+    const td0 = document.createElement('td');
+    td0.className   = 'day-cell';
+    td0.textContent = DAYS[di];
+    tr.appendChild(td0);
+    for(let ln=1; ln<=7; ln++){
+      const td  = document.createElement('td');
+      const key = di+'_'+ln;   // Firebase لا يقبل '-' كمفتاح
+      const bk  = data[key];
+      if(bk){
+        const wrap  = document.createElement('div');
+        wrap.className = 'cell';
+        const inner = document.createElement('div');
+        inner.className = 'booked';
+        const nm = document.createElement('span');
+        nm.className   = 'tname';
+        nm.textContent = bk.n;
+        inner.appendChild(nm);
+        if(canDel){
+          const btn = document.createElement('button');
+          btn.className   = 'del-btn';
+          btn.textContent = 'حذف';
+          btn.setAttribute('data-key', key);
+          inner.appendChild(btn);
+        }
+        wrap.appendChild(inner);
+        td.appendChild(wrap);
+      } else {
+        const wrap2 = document.createElement('div');
+        wrap2.className   = 'cell';
+        const em = document.createElement('span');
+        em.className   = 'empty';
+        em.textContent = 'متاحة';
+        wrap2.appendChild(em);
+        td.appendChild(wrap2);
+      }
+      tr.appendChild(td);
+    }
+    tb.appendChild(tr);
+  }
+}
+
+function renderAll(){
+  renderTable('tbody-t', false);
+  renderTable('tbody-a', true);
+}
+
+/* ── Delete via event delegation ── */
+document.getElementById('tbody-a').addEventListener('click', (e) => {
+  if(e.target && e.target.className === 'del-btn'){
+    const key = e.target.getAttribute('data-key');
+    if(key && confirm('هل تريدين إلغاء هذا الحجز؟')){
+      remove(ref(db, 'bookings/'+key))
+        .then(() => alert2('al-a','تم إلغاء الحجز ✅','inf'))
+        .catch(() => alert2('al-a','حدث خطأ أثناء الحذف','err'));
+    }
+  }
+});
+
+/* ── Booking ── */
+document.getElementById('btn-book').addEventListener('click', () => {
+  const name = document.getElementById('t-name').value.trim();
+  const day  = document.getElementById('t-day').value;
+  const les  = document.getElementById('t-les').value;
+  if(!name || !day || !les){
+    alert2('al-t','يرجى ملء جميع الحقول','err'); return;
+  }
+  const key = day+'_'+les;
+  if(data[key]){
+    alert2('al-t','هذه الحصة محجوزة! اختاري وقتاً آخر','err'); return;
+  }
+  set(ref(db, 'bookings/'+key), {n: name})
+    .then(() => {
+      document.getElementById('t-name').value = '';
+      document.getElementById('t-day').value  = '';
+      document.getElementById('t-les').value  = '';
+      alert2('al-t','تم حجز الحصة بنجاح ✨','ok');
+    })
+    .catch(() => alert2('al-t','حدث خطأ، حاولي مرة أخرى','err'));
+});
+
+/* ── Save week info ── */
+document.getElementById('btn-save-week').addEventListener('click', () => {
+  const w = document.getElementById('a-wnum').value.trim();
+  const d = document.getElementById('a-wdate').value.trim();
+  set(winfoRef, {w, d})
+    .then(() => alert2('al-a','تم حفظ معلومات الأسبوع ✅','ok'))
+    .catch(() => alert2('al-a','حدث خطأ أثناء الحفظ','err'));
+});
+
+/* ── Clear all ── */
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if(confirm('هل أنتِ متأكدة؟ سيتم حذف جميع الحجوزات نهائياً!')){
+    remove(bookingsRef)
+      .then(() => alert2('al-a','تم حذف جميع الحجوزات 🗑️','inf'))
+      .catch(() => alert2('al-a','حدث خطأ أثناء الحذف','err'));
+  }
+});
+
+/* ── Login ── */
+document.getElementById('btn-login').addEventListener('click', doLogin);
+document.getElementById('a-pass').addEventListener('keydown', (e) => {
+  if(e.key==='Enter') doLogin();
+});
+
+function doLogin(){
+  const p = document.getElementById('a-pass').value;
+  if(p === PASS){
+    document.getElementById('a-login').className   = 'login-wrap hidden';
+    document.getElementById('a-content').className = '';
+    document.getElementById('a-err').style.display = 'none';
+    renderTable('tbody-a', true);
+    refreshWeek();
+  } else {
+    document.getElementById('a-err').style.display = 'block';
+    document.getElementById('a-pass').value = '';
+  }
+}
+
+/* ── Logout ── */
+document.getElementById('btn-logout').addEventListener('click', () => {
+  document.getElementById('a-content').className = 'hidden';
+  document.getElementById('a-login').className   = 'login-wrap';
+  document.getElementById('a-pass').value = '';
+  showTab('t');
+});
+
+/* ── Init ── */
+refreshWeek();
+
+</script>
+</body>
+</html>
